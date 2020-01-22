@@ -28,8 +28,8 @@ namespace BookShelf35.Controllers
         public async Task<IActionResult> Index()
         {
             var user = await GetCurrentUserAsync();
-            var applicationDbContext = _context.Author.Where(a => a.ApplicationUserId == user.Id);
-            return View(await applicationDbContext.ToListAsync());
+            var authors = _context.Author.Where(a => a.ApplicationUserId == user.Id);
+            return View(await authors.ToListAsync());
         }
 
         // GET: Authors/Details/5
@@ -41,8 +41,7 @@ namespace BookShelf35.Controllers
             }
 
             var author = await _context.Author
-                .Include(a => a.ApplicationUser)
-                .FirstOrDefaultAsync(m => m.Id == id);
+                        .FirstOrDefaultAsync(m => m.Id == id);
             if (author == null)
             {
                 return NotFound();
@@ -54,7 +53,7 @@ namespace BookShelf35.Controllers
         // GET: Authors/Create
         public IActionResult Create()
         {
-            
+
             return View();
         }
 
@@ -63,7 +62,7 @@ namespace BookShelf35.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Name,ApplicationUserId")] Author author)
+        public async Task<IActionResult> Create([Bind("Id,Name")] Author author)
         {
             var user = await GetCurrentUserAsync();
             author.ApplicationUserId = user.Id;
@@ -73,7 +72,7 @@ namespace BookShelf35.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-           
+
             return View(author);
         }
 
@@ -90,7 +89,7 @@ namespace BookShelf35.Controllers
             {
                 return NotFound();
             }
-           
+
             return View(author);
         }
 
@@ -128,7 +127,7 @@ namespace BookShelf35.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-          
+
             return View(author);
         }
 
@@ -141,7 +140,7 @@ namespace BookShelf35.Controllers
             }
 
             var author = await _context.Author
-                .Include(a => a.ApplicationUser)
+              
                 .FirstOrDefaultAsync(m => m.Id == id);
             if (author == null)
             {

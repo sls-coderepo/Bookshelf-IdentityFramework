@@ -7,23 +7,26 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using BookShelf35.Data;
 using BookShelf35.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace BookShelf35.Controllers
 {
     public class BooksController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public BooksController(ApplicationDbContext context)
+        public BooksController(ApplicationDbContext context, UserManager<ApplicationUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         // GET: Books
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Book.Include(b => b.ApplicationUser).Include(b => b.Author);
-            return View(await applicationDbContext.ToListAsync());
+            var books = _context.Book.Include(b => b.ApplicationUser).Include(b => b.Author);
+            return View(await books.ToListAsync());
         }
 
         // GET: Books/Details/5
@@ -47,10 +50,11 @@ namespace BookShelf35.Controllers
         }
 
         // GET: Books/Create
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id");
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Id");
+            var user = await GetCurrentUserAsync();
+            var authors = _context.Author.Where(a => a.ApplicationUserId == user.Id);
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name");
             return View();
         }
 
@@ -59,16 +63,19 @@ namespace BookShelf35.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Title,AuthorId,YearPublished,Rating,Genre,ApplicationUserId")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Title,AuthorId,YearPublished,Rating,Genre")] Book book)
         {
+            var user = await GetCurrentUserAsync();
+            book.ApplicationUserId = user.Id;
+
             if (ModelState.IsValid)
             {
                 _context.Add(book);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", book.ApplicationUserId);
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Id", book.AuthorId);
+          
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", book.AuthorId);
             return View(book);
         }
 
@@ -85,8 +92,8 @@ namespace BookShelf35.Controllers
             {
                 return NotFound();
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", book.ApplicationUserId);
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Id", book.AuthorId);
+          
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", book.AuthorId);
             return View(book);
         }
 
@@ -95,13 +102,14 @@ namespace BookShelf35.Controllers
         // more details see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,YearPublished,Rating,Genre,ApplicationUserId")] Book book)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Title,AuthorId,YearPublished,Rating,Genre")] Book book)
         {
             if (id != book.Id)
             {
                 return NotFound();
             }
-
+            var user = await GetCurrentUserAsync();
+            book.ApplicationUserId = user.Id;
             if (ModelState.IsValid)
             {
                 try
@@ -122,8 +130,8 @@ namespace BookShelf35.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["ApplicationUserId"] = new SelectList(_context.ApplicationUsers, "Id", "Id", book.ApplicationUserId);
-            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Id", book.AuthorId);
+           
+            ViewData["AuthorId"] = new SelectList(_context.Author, "Id", "Name", book.AuthorId);
             return View(book);
         }
 
@@ -162,5 +170,6 @@ namespace BookShelf35.Controllers
         {
             return _context.Book.Any(e => e.Id == id);
         }
+        private Task<ApplicationUser> GetCurrentUserAsync() => _userManager.GetUserAsync(HttpContext.User);
     }
 }

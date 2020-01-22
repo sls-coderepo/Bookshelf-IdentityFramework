@@ -27,9 +27,7 @@
             <th>
                 @Html.DisplayNameFor(model => model.Genre)
             </th>
-            <th>
-                @Html.DisplayNameFor(model => model.ApplicationUser)
-            </th>
+           
             <th></th>
         </tr>
     </thead>
@@ -40,7 +38,7 @@
                 @Html.DisplayFor(modelItem => item.Title)
             </td>
             <td>
-                @Html.DisplayFor(modelItem => item.Author.Id)
+                @Html.DisplayFor(modelItem => item.Author.Name)
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.YearPublished)
@@ -51,9 +49,7 @@
             <td>
                 @Html.DisplayFor(modelItem => item.Genre)
             </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ApplicationUser.Id)
-            </td>
+        
             <td>
                 <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
                 <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
